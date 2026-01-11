@@ -1,0 +1,994 @@
+[index.html](https://github.com/user-attachments/files/24548721/index.html)
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="./resources/ol.css">
+        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+        <link rel="stylesheet" type="text/css" href="resources/horsey.min.css">
+        <link rel="stylesheet" type="text/css" href="resources/ol-search-layer.min.css">
+        <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+        <style>
+        /* Basic style configuration */
+        html, body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family:Arial, sans-serif;
+        }
+        .ol-control > * {
+            background-color: #f8f8f8!important;
+            color: #444444!important;
+            border-radius: 0px;
+        }
+        .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder {
+            color: #444444!important;
+        }
+        .search-layer-input-search {
+            background-color: #f8f8f8!important;
+        }
+        .ol-control > *:focus, .ol-control >*:hover {
+            background-color: rgba(248, 248, 248, 0.7)!important;
+        } 
+        .ol-control {
+            background-color: rgba(255,255,255,.4) !important;
+            padding: 2px !important;
+        }
+        /* Title bar style (with Logo) */
+        #webgis-title {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: lightgreen;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 30px;
+            font-weight: 700;
+            text-align: center;
+            color: #2E8B57;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        #webgis-title img {
+            width: 80px;
+            height: 60px;
+            object-fit: contain;
+        }
+        /* Research objective panel style */
+        #objective {
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            width: 260px;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.7;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        #objective strong {
+            font-size: 18px;
+            color: #2E8B57;
+        }
+        #objective ol {
+            margin: 8px 0 0 20px;
+            padding: 0;
+            color: #333;
+        }
+        /* Map container style */
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        /* Credits information style */
+        #credits {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 6px 12px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            z-index: 1000;
+            color: #666;
+        }
+        /* Search bar style (avoid overlapping with research panel) */
+        #photonBox {
+            position: absolute;
+            top: 480px;
+            left: 10px;
+            z-index: 1000;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            width: 260px;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        #photonBox strong {
+            color: #2E8B57;
+        }
+        #photonInput {
+            width: 100%;
+            padding: 8px 10px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        #photonResults {
+            max-height: 240px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 8px;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+        }
+        .photon-item {
+            padding: 8px 10px;
+            border: 1px solid #f0f0f0;
+            border-radius: 3px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .photon-item:hover {
+            background: #f8f8f8;
+        }
+        /* New: Clear highlight button style */
+        #clearHighlightBtn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #2E8B57;
+            border-radius: 3px;
+            background-color: #fff;
+            color: #2E8B57;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #clearHighlightBtn:hover {
+            background-color: #f5fcf8;
+        }
+        /* Popup style optimization */
+        .ol-popup-content {
+            font-family:sans-serif;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .ol-popup-content dl {
+            margin: 0;
+            padding: 0;
+        }
+        .ol-popup-content dt {
+            font-weight: 700;
+            color: #2E8B57;
+            margin-bottom: 5px;
+        }
+        .ol-popup-content dd {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        /* Function buttons group style */
+        .function-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .func-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2E8B57;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .func-btn:hover {
+            background-color: #f5f5f5;
+            transform: scale(1.05);
+        }
+        /* Help modal style */
+        .help-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-width: 90%;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+        }
+        .help-modal.active {
+            display: block;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: #2E8B57;
+            font-size: 22px;
+        }
+        .close-modal {
+            border: none;
+            background: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .modal-content h4 {
+            color: #2E8B57;
+            margin: 15px 0 8px 0;
+        }
+        .modal-content p, .modal-content li {
+            line-height: 1.6;
+            color: #333;
+        }
+        .modal-content ul {
+            margin: 8px 0 15px 20px;
+        }
+        /* Layer switch modal style */
+        .layer-switch-modal {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            width: 280px;
+            background: white;
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1500;
+            display: none;
+        }
+        .layer-switch-modal.active {
+            display: block;
+        }
+        .layer-switch-modal h4 {
+            margin: 0 0 10px 0;
+            color: #2E8B57;
+            font-size: 16px;
+            text-align: center;
+        }
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .layer-item:last-child {
+            border-bottom: none;
+        }
+        .layer-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .layer-label {
+            color: #333;
+            cursor: pointer;
+        }
+        </style>
+        <!-- Browser tab title -->
+        <title>Hangzhou Green Space Distribution WebGIS</title>
+    </head>
+    <body>
+        <!-- 1. Map title with Logo -->
+        <h2 id="webgis-title">
+            <img src="images/1122.jpg" alt="Hangzhou Green Space Project Logo">
+            Hangzhou Green Space Distribution WebGIS
+        </h2>
+
+        <!-- 2. Research objectives panel -->
+        <div id="objective">
+            <strong>Research Purpose:</strong><br>
+            Analyze the spatial distribution characteristics of green spaces in Hangzhou, evaluate the regulatory effect of green space coverage on the urban ecological environment, and provide data support for urban green space planning.<br><br>
+            
+            <strong>Research Objectives:</strong><br>
+            <ol>
+                <li>Visualize the spatial distribution differences of green spaces (parks, lawns, village green spaces) in different areas of Hangzhou;</li>
+                <li>Calculate the total area and proportion of various types of green spaces in Hangzhou, and compute the green space coverage rate;</li>
+                <li>Analyze the correlation between green space distribution and administrative boundaries, and identify areas with weak green space coverage;</li>
+                <li>Provide reference basis for urban ecological construction and optimal layout of green spaces in Hangzhou.</li>
+            </ol>
+        </div>
+
+        <!-- 3. Map container -->
+        <div id="map">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+        </div>
+
+        <!-- 4. Credits and data source information -->
+        <div id="credits">
+            Map Creator: [Menghan Li] | Data Source: Hangzhou Green Space Vector Data (Exported from QGIS), GDA2020 Coordinate System (EPSG:7844) | Base Map: © OpenStreetMap contributors (CC-BY-SA) | Technical Support: QGIS/qgis2web + OpenLayers
+        </div>
+
+        <!-- 5. Photon/OSM Global Search Bar (New: Clear Highlight Button) -->
+        <div id="photonBox">
+            <strong>Search Hangzhou Locations (eg： 西湖区, 萧山区)</strong>
+            <input id="photonInput" type="text" placeholder="Enter location name (at least 2 characters)...">
+            <div id="photonResults"></div>
+            <!-- New: Clear Highlight Button -->
+            <button id="clearHighlightBtn" style="display:none;">Clear Current Highlight</button>
+        </div>
+
+        <!-- 6. Function buttons group (Added layer switch button) -->
+        <div class="function-buttons">
+            <!-- Layer switch button -->
+            <button class="func-btn" id="layerSwitchBtn" title="Switch Layers">
+                <i class="fas fa-layer-group"></i>
+            </button>
+            <!-- Download data button -->
+            <button class="func-btn" id="downloadBtn" title="Download Data (ZIP Format)">
+                <i class="fas fa-download"></i>
+            </button>
+            <!-- Help button -->
+            <button class="func-btn" id="helpBtn" title="Usage Help">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <!-- About project button -->
+            <button class="func-btn" id="aboutBtn" title="About This Project">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+
+        <!-- Layer switch modal -->
+        <div class="layer-switch-modal" id="layerSwitchModal">
+            <h4>Layer Control</h4>
+            <div class="layer-item">
+                <input type="checkbox" id="baseMap" class="layer-checkbox" checked>
+                <label for="baseMap" class="layer-label">OpenStreetMap Base Map</label>
+            </div>
+            <div class="layer-item">
+                <input type="checkbox" id="layer1" class="layer-checkbox" checked>
+                <label for="layer1" class="layer-label">Administrative Boundary Layer</label>
+            </div>
+            <div class="layer-item">
+                <input type="checkbox" id="layer2" class="layer-checkbox" checked>
+                <label for="layer2" class="layer-label">Green Space Layer 1</label>
+            </div>
+            <div class="layer-item">
+                <input type="checkbox" id="layer3" class="layer-checkbox" checked>
+                <label for="layer3" class="layer-label">Green Space Layer 2</label>
+            </div>
+        </div>
+
+        <!-- Help modal -->
+        <div class="help-modal" id="helpModal">
+            <div class="modal-header">
+                <h3>Hangzhou Green Space WebGIS Usage Help</h3>
+                <button class="close-modal" id="closeHelpModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <h4>1. Basic Map Operations</h4>
+                <ul>
+                    <li>Pan: Hold left mouse button and drag the map</li>
+                    <li>Zoom: Scroll mouse wheel up/down, or use zoom controls in the upper right corner of the map</li>
+                    <li>View Details: Click on features (administrative areas/green spaces) on the map to display core information in pop-up window</li>
+                </ul>
+
+                <h4>2. Function Button Explanations</h4>
+                <ul>
+                    <li><i class="fas fa-layer-group"></i> Layer Switch: Control display/hide of each layer (administrative boundaries, different types of green spaces, base map)</li>
+                    <li><i class="fas fa-download"></i> Download Data: Obtain Hangzhou green space related data in CSV format (including area, administrative region, etc.)</li>
+                    <li><i class="fas fa-question-circle"></i> Usage Help: Open this help document</li>
+                    <li><i class="fas fa-info-circle"></i> About Project: View project introduction and data sources</li>
+                </ul>
+
+                <h4>3. Search Function</h4>
+                <p>The search bar on the left allows you to enter Hangzhou location names (e.g., "West Lake", "Xiaoshan District"). After clicking the search results, the map will automatically locate to the area and highlight it, making it easy to quickly view the corresponding green space distribution.</p>
+
+                <h4>4. Data Description</h4>
+                <p>Pop-up display fields: Administrative Region (only display region name), Green Space Area (Unit: hectares ha). All data has been filtered to retain only core useful information.</p>
+            </div>
+        </div>
+
+        <!-- About project modal -->
+        <div class="help-modal" id="aboutModal">
+            <div class="modal-header">
+                <h3>About Hangzhou Green Space Distribution WebGIS</h3>
+                <button class="close-modal" id="closeAboutModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <h4>Project Introduction</h4>
+                <p>This project is developed based on open-source geographic information system technologies (QGIS, QGIS2Web, OpenLayers), aiming to visualize the spatial distribution characteristics of green spaces in Hangzhou and provide data support for urban ecological planning and green space optimization.</p>
+
+                <h4>Core Functions</h4>
+                <ul>
+                    <li>Green Space Distribution Visualization: Intuitively display the spatial locations of different types of green spaces (parks, lawns, village green spaces) in Hangzhou</li>
+                    <li>Interactive Query: Click on features to view core information such as administrative region name and green space area</li>
+                    <li>Location Search: Quickly locate specific areas in Hangzhou and view the green space coverage in those areas</li>
+                    <li>Data Download: Open access to green space related datasets to support further analysis</li>
+                    <li>Layer Control: Freely switch the display/hide status of different layers</li>
+                </ul>
+
+                <h4>Data Sources</h4>
+                <p>Hangzhou Green Space Vector Data (Exported from QGIS), GDA2020 Coordinate System (EPSG:7844), Base Map Data from OpenStreetMap contributors (CC-BY-SA License)</p>
+
+                <h4>Technical Support</h4>
+                <p>QGIS / QGIS2Web / OpenLayers / Photon Geocoder / GitHub</p>
+            </div>
+        </div>
+
+        <!-- Load all dependent libraries first -->
+        <script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <script src="resources/qgis2web_expressions.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="resources/horsey.min.js"></script>
+        <script src="resources/ol-search-layer.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        <script src="resources/photon-geocoder-autocomplete.min.js"></script>
+        <script src="layers/admin_1.js"></script>
+        <script src="layers/green_2.js"></script>
+        <script src="layers/grass_3.js"></script>
+        <script src="styles/admin_1_style.js"></script>
+        <script src="styles/green_2_style.js"></script>
+        <script src="styles/grass_3_style.js"></script>
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        
+        <!-- QGIS2Web core script -->
+        <script src="./resources/qgis2web.js"></script>  
+
+        <!-- Core Function 1: Popup Optimization (Adapt to new layer naming, only display core fields) -->
+        <script type="text/javascript">
+        window.qgis2web = window.qgis2web || {};
+        window.qgis2web.getPopupContent = function(feature, layer) {
+            var layerName = layer.get('name') || '';
+            // Administrative boundary layer (admin_1): Only display region name
+            if (layerName.includes('admin')) {
+                var areaName = feature.get('name') || feature.get('NAME') || 'Unknown Area';
+                return '<dl><dt>Administrative Region</dt><dd>' + areaName + '</dd></dl>';
+            }
+            // Green space layers (green_2/grass_3): Only display green space area
+            else if (layerName.includes('green') || layerName.includes('grass') || layerName.includes('Green Space')) {
+                var grassArea = feature.get('grassarea') || feature.get('AREA') || '0';
+                return '<dl><dt>Green Space Area (ha)</dt><dd>' + grassArea + '</dd></dl>';
+            }
+            // Other layers: Hide popup
+            else {
+                return '';
+            }
+        };
+
+        // Override popup logic after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (window.layers && layers.length > 0) {
+                    layers.forEach(function(layer) {
+                        var olLayer = layer.get('olLayer');
+                        if (olLayer) olLayer.un('click');
+                        
+                        layer.set('popupContent', function(feature) {
+                            return window.qgis2web.getPopupContent(feature, this);
+                        });
+
+                        olLayer.on('click', function(evt) {
+                            var feature = evt.feature;
+                            if (feature && evt.coordinate) {
+                                var popupContent = window.qgis2web.getPopupContent(feature, layer);
+                                document.getElementById('popup-content').innerHTML = popupContent;
+                                if (window.popup) {
+                                    window.popup.setPosition(evt.coordinate);
+                                    window.map.addOverlay(window.popup);
+                                }
+                            }
+                        });
+                    });
+                }
+            }, 1000);
+        });
+        </script>
+
+        <!-- Core Function 2: Photon Search Bar Logic (New: Area Highlight Display) -->
+        <script type="text/javascript">
+(function(){
+    const box = document.getElementById('photonBox');
+    const input = document.getElementById('photonInput');
+    const results = document.getElementById('photonResults');
+    const clearHighlightBtn = document.getElementById('clearHighlightBtn');
+    
+    // 1. Initialize global highlight layer (higher priority than other layers)
+    let highlightSource = new ol.source.Vector();
+    let highlightLayer = new ol.layer.Vector({
+        source: highlightSource,
+        style: new ol.style.Style({
+            // Highlight border style
+            stroke: new ol.style.Stroke({
+                color: '#FF4500', // Orange-red border, eye-catching
+                width: 3 // Border width
+            }),
+            // Highlight fill style (translucent, does not block base map and green space layers)
+            fill: new ol.style.Fill({
+                color: 'rgba(255, 165, 0, 0.3)' // Orange-yellow translucent fill
+            })
+        }),
+        zIndex: 100 // Ensure highlight layer is on top
+    });
+
+    // 2. Delay to wait for map initialization before adding highlight layer (increase fault tolerance)
+    let mapLoadTimer = setInterval(() => {
+        if (window.map && map.addLayer) {
+            map.addLayer(highlightLayer);
+            clearInterval(mapLoadTimer);
+            console.log('Highlight layer added to map successfully');
+        }
+    }, 500);
+    // Timeout protection
+    setTimeout(() => {
+        clearInterval(mapLoadTimer);
+        if (!window.map) console.error('Map object not initialized!');
+    }, 10000);
+    
+    // 3. Tool function to clear highlight
+    function clearHighlight() {
+        highlightSource.clear(); 
+        clearHighlightBtn.style.display = 'none';
+    }
+    clearHighlightBtn.addEventListener('click', clearHighlight);
+
+    // 4. Fixed search function (using Nominatim API, stable support for Chinese)
+    async function searchLocation(q) {
+        // Null/short content judgment
+        if (!q || q.trim().length < 2) { // Reduce character requirement, 2 characters can search
+            results.style.display = 'none';
+            results.innerHTML = '';
+            return;
+        }
+        
+        // Construct search keyword (force limit to Hangzhou to avoid searching other cities)
+        const searchQuery = `Hangzhou ${q.trim()}`;
+        // Nominatim API (stable, no CORS, support Chinese)
+        const url = `https://nominatim.openstreetmap.org/search?` + new URLSearchParams({
+            q: searchQuery,
+            format: 'geojson',
+            limit: 8,
+            language: 'en',
+            countrycodes: 'cn', // Limit to China
+            polygon_geojson: 1 // Return polygon data (for highlighting)
+        });
+
+        try {
+            // Send request (add timeout control)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+            
+            const resp = await fetch(url, {
+                method: 'GET',
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': 'HangzhouGreenGIS/1.0' // Must add User-Agent, otherwise API rejects
+                }
+            });
+            clearTimeout(timeoutId);
+
+            if (!resp.ok) throw new Error(`API returned error: ${resp.status}`);
+            
+            const data = await resp.json();
+            const feats = (data && data.features) || [];
+
+            // Render search results
+            results.style.display = feats.length ? 'block' : 'none';
+            if (feats.length === 0) {
+                results.innerHTML = '<div style="padding:8px; color:#666;">No matching locations found, please try another keyword</div>';
+                return;
+            }
+
+            results.innerHTML = feats.map((f, i) => {
+                const name = f.properties.display_name || 'Unknown Location';
+                // Simplify display name (only keep province/city + core name)
+                const shortName = name.split(',').reverse().slice(0, 3).reverse().join(' ');
+                return `
+                    <div class="photon-item" data-index="${i}">
+                        ${shortName}
+                    </div>
+                `;
+            }).join('');
+
+            // Bind result click event
+            results.querySelectorAll('.photon-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = this.dataset.index;
+                    const f = feats[idx];
+                    if (!window.map || !ol) return;
+
+                    // Step 1: Clear old highlight to avoid overlap
+                    clearHighlight();
+
+                    // Step 2: Parse coordinates and convert projection
+                    let coord, geometry;
+                    const wgs84 = 'EPSG:4326';
+                    const webMercator = 'EPSG:3857';
+
+                    // Handle different geographic types
+                    switch (f.geometry.type) {
+                        case 'Point':
+                            coord = ol.proj.fromLonLat(f.geometry.coordinates);
+                            // Point type: Create circular highlight with 800m radius
+                            geometry = new ol.geom.Circle(coord, 800);
+                            break;
+                        case 'Polygon':
+                            // Polygon type: Directly use returned polygon data
+                            geometry = new ol.geom.Polygon(f.geometry.coordinates);
+                            geometry.transform(wgs84, webMercator);
+                            // Get polygon center point for map positioning
+                            const center = ol.extent.getCenter(geometry.getExtent());
+                            coord = center;
+                            break;
+                        default:
+                            coord = ol.proj.fromLonLat(f.geometry.coordinates);
+                            geometry = new ol.geom.Circle(coord, 800);
+                    }
+
+                    // Step 3: Map positioning to target area
+                    map.getView().animate({
+                        center: coord,
+                        zoom: 13, // Adjust zoom level to fit Hangzhou area
+                        duration: 600
+                    });
+
+                    // Step 4: Add highlight feature
+                    const highlightFeature = new ol.Feature({ geometry: geometry });
+                    highlightSource.addFeature(highlightFeature);
+
+                    // Step 5: Show clear button
+                    clearHighlightBtn.style.display = 'block';
+                    results.style.display = 'none';
+                });
+            });
+
+        } catch (err) {
+            console.error('Search failed:', err);
+            results.style.display = 'block';
+            results.innerHTML = `
+                <div style="padding:8px; color:#dc3545;">
+                    Search failed: ${err.message || 'Network or API issue'}<br>
+                    Please check network or try another keyword (e.g.,"West Lake","Xiaoshan")
+                </div>
+            `;
+        }
+    }
+
+    // 5. Bind input event (simplified anti-shake, avoid delay)
+    let searchTimer = null;
+    input.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            searchLocation(input.value);
+        }, 200); // Short delay to avoid frequent requests
+    });
+
+    // Close search results when clicking other areas of the page
+    document.addEventListener('click', (e) => {
+        if (!box.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+
+    // Trigger search on Enter key (enhance experience)
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            searchLocation(input.value);
+            // Focus first result
+            const firstItem = results.querySelector('.photon-item');
+            if (firstItem) firstItem.click();
+        }
+    });
+
+})();
+</script>
+
+        <!-- Core Function 3: New Button Logic (Fix layer switch function) -->
+        <script type="text/javascript">
+        // Bind events after all layers and map are loaded
+        window.onload = function() {
+            console.log('Page loaded completely, start binding button events');
+            
+            // Global variable to store layer objects
+            window.layerObjects = {
+                baseMap: null,
+                adminLayer: null,
+                greenLayer: null,
+                grassLayer: null
+            };
+
+            // 1. Layer switch button logic
+            const layerSwitchBtn = document.getElementById('layerSwitchBtn');
+            const layerSwitchModal = document.getElementById('layerSwitchModal');
+            
+            if (layerSwitchBtn && layerSwitchModal) {
+                // Initialize layer objects
+                function initLayers() {
+                    console.log('Start initializing layers...');
+                    
+                    // Method 1: Get all layers through window.map
+                    if (window.map && map.getLayers) {
+                        const allLayers = map.getLayers().getArray();
+                        console.log('Number of layers in map:', allLayers.length);
+                        
+                        allLayers.forEach((layer, idx) => {
+                            const layerName = layer.get('name') || layer.get('title') || `Layer ${idx}`;
+                            console.log(`Layer ${idx}:`, layerName, layer);
+                            
+                            // Identify base map (usually XYZ layer)
+                            if (layer.get('source') && layer.get('source').getUrls && 
+                                (layerName.includes('OpenStreetMap') || layerName.includes('OSM') || 
+                                 layerName.includes('XYZ') || layer.get('type') === 'XYZ')) {
+                                window.layerObjects.baseMap = layer;
+                                console.log('Found base map:', layerName);
+                            }
+                            // Identify administrative boundary layer
+                            else if (layerName.toLowerCase().includes('admin')) {
+                                window.layerObjects.adminLayer = layer;
+                                console.log('Found administrative boundary layer:', layerName);
+                            }
+                            // Identify green space layers
+                            else if (layerName.toLowerCase().includes('green') && !layerName.toLowerCase().includes('grass')) {
+                                window.layerObjects.greenLayer = layer;
+                                console.log('Found green space layer 1:', layerName);
+                            }
+                            else if (layerName.toLowerCase().includes('grass')) {
+                                window.layerObjects.grassLayer = layer;
+                                console.log('Found green space layer 2:', layerName);
+                            }
+                        });
+                    }
+                    
+                    // Method 2: Find through window.layers
+                    if (!window.layerObjects.adminLayer && window.layers && window.layers.length > 0) {
+                        console.log('Finding layers through window.layers...');
+                        window.layers.forEach((layerObj, idx) => {
+                            const layerName = layerObj.get('name') || `Layer ${idx}`;
+                            const olLayer = layerObj.get('olLayer');
+                            
+                            if (olLayer) {
+                                if (layerName.toLowerCase().includes('admin')) {
+                                    window.layerObjects.adminLayer = olLayer;
+                                    console.log('Found administrative boundary layer:', layerName);
+                                }
+                                else if (layerName.toLowerCase().includes('green') && !layerName.toLowerCase().includes('grass')) {
+                                    window.layerObjects.greenLayer = olLayer;
+                                    console.log('Found green space layer 1:', layerName);
+                                }
+                                else if (layerName.toLowerCase().includes('grass')) {
+                                    window.layerObjects.grassLayer = olLayer;
+                                    console.log('Found green space layer 2:', layerName);
+                                }
+                            }
+                        });
+                    }
+                    
+                    console.log('Layer initialization completed:', window.layerObjects);
+                }
+                
+                layerSwitchBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    layerSwitchModal.classList.toggle('active');
+                    
+                    // Initialize layers and sync display status each time the popup is opened
+                    setTimeout(() => {
+                        initLayers();
+                        syncLayerCheckboxes();
+                    }, 100);
+                });
+
+                // Close layer switch popup when clicking other parts of the page
+                document.addEventListener('click', function(e) {
+                    if (!layerSwitchBtn.contains(e.target) && !layerSwitchModal.contains(e.target)) {
+                        layerSwitchModal.classList.remove('active');
+                    }
+                });
+
+                // Sync layer display status to checkboxes
+                function syncLayerCheckboxes() {
+                    console.log('Syncing layer status...');
+                    
+                    // Sync base map status
+                    const baseMapCheckbox = document.getElementById('baseMap');
+                    if (baseMapCheckbox && window.layerObjects.baseMap) {
+                        baseMapCheckbox.checked = window.layerObjects.baseMap.getVisible();
+                        console.log('Base map status:', baseMapCheckbox.checked);
+                    }
+                    
+                    // Sync administrative boundary layer status
+                    const layer1Checkbox = document.getElementById('layer1');
+                    if (layer1Checkbox && window.layerObjects.adminLayer) {
+                        layer1Checkbox.checked = window.layerObjects.adminLayer.getVisible();
+                        console.log('Administrative boundary layer status:', layer1Checkbox.checked);
+                    }
+                    
+                    // Sync green space layer 1 status
+                    const layer2Checkbox = document.getElementById('layer2');
+                    if (layer2Checkbox && window.layerObjects.greenLayer) {
+                        layer2Checkbox.checked = window.layerObjects.greenLayer.getVisible();
+                        console.log('Green space layer 1 status:', layer2Checkbox.checked);
+                    }
+                    
+                    // Sync green space layer 2 status
+                    const layer3Checkbox = document.getElementById('layer3');
+                    if (layer3Checkbox && window.layerObjects.grassLayer) {
+                        layer3Checkbox.checked = window.layerObjects.grassLayer.getVisible();
+                        console.log('Green space layer 2 status:', layer3Checkbox.checked);
+                    }
+                }
+
+                // Layer show/hide logic
+                const layerCheckboxes = document.querySelectorAll('.layer-checkbox');
+                layerCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const layerId = this.id;
+                        console.log(`Switching layer: ${layerId}, status: ${this.checked}`);
+                        
+                        // Find corresponding layer by checkbox ID and control show/hide
+                        let targetLayer = null;
+                        switch(layerId) {
+                            case 'baseMap':
+                                targetLayer = window.layerObjects.baseMap;
+                                break;
+                            case 'layer1':
+                                targetLayer = window.layerObjects.adminLayer;
+                                break;
+                            case 'layer2':
+                                targetLayer = window.layerObjects.greenLayer;
+                                break;
+                            case 'layer3':
+                                targetLayer = window.layerObjects.grassLayer;
+                                break;
+                        }
+                        
+                        if (targetLayer && typeof targetLayer.setVisible === 'function') {
+                            targetLayer.setVisible(this.checked);
+                            console.log(`Layer ${layerId} has been ${this.checked ? 'shown' : 'hidden'}`);
+                        } else {
+                            console.warn(`Layer not found or unavailable: ${layerId}`);
+                        }
+                    });
+                });
+                
+                // Delay initialization after page load
+                setTimeout(() => {
+                    initLayers();
+                    syncLayerCheckboxes();
+                    console.log('Layer status initialization completed');
+                }, 2000);
+            }
+
+            // 2. Download data button logic
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function() {
+                    // Simulated data
+                    const adminData = "Administrative Region Name\nWest Lake District\nXiaoshan District\nShangcheng District\nXiacheng District\nGongshu District\nBinjiang District\nQiantang District\nYuhang District\nLinping District\nFuyang District\nLin'an District\nTonglu County\nChun'an County\nJiande City";
+                    const greenData = "Green Space ID,Green Space Type,Area (ha)\nG001,Park Green Space,12.5\nG002,Lawn Green Space,8.3\nG003,Village Green Space,5.7\nG004,Park Green Space,15.2\nG005,Lawn Green Space,9.1";
+                    
+                    // Create Blob objects
+                    const adminBlob = new Blob([adminData], { type: 'text/csv;charset=utf-8;' });
+                    const greenBlob = new Blob([greenData], { type: 'text/csv;charset=utf-8;' });
+
+                    // Compress with JSZip
+                    if (window.JSZip) {
+                        const zip = new JSZip();
+                        zip.file("Hangzhou_Administrative_Region_Data.csv", adminBlob);
+                        zip.file("Hangzhou_Green_Space_Data.csv", greenBlob);
+                        
+                        zip.generateAsync({ type: 'blob' }).then(function(content) {
+                            const a = document.createElement('a');
+                            const url = URL.createObjectURL(content);
+                            a.href = url;
+                            a.download = "Hangzhou_Green_Space_WebGIS_Data.zip";
+                            document.body.appendChild(a);
+                            a.click();
+                            setTimeout(() => {
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }, 0);
+                        });
+                    } else {
+                        // Directly download single file without JSZip
+                        alert("Green space data (CSV format) has been downloaded for you. Please ensure JSZip library is loaded successfully for batch download");
+                        const a = document.createElement('a');
+                        const url = URL.createObjectURL(greenBlob);
+                        a.href = url;
+                        a.download = "Hangzhou_Green_Space_Data.csv";
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }, 0);
+                    }
+                });
+            }
+
+            // 3. Help modal logic
+            const helpBtn = document.getElementById('helpBtn');
+            const helpModal = document.getElementById('helpModal');
+            const closeHelpModal = document.getElementById('closeHelpModal');
+
+            if (helpBtn && helpModal && closeHelpModal) {
+                helpBtn.addEventListener('click', function() {
+                    helpModal.classList.add('active');
+                });
+
+                closeHelpModal.addEventListener('click', function() {
+                    helpModal.classList.remove('active');
+                });
+            }
+
+            // 4. About project modal logic
+            const aboutBtn = document.getElementById('aboutBtn');
+            const aboutModal = document.getElementById('aboutModal');
+            const closeAboutModal = document.getElementById('closeAboutModal');
+
+            if (aboutBtn && aboutModal && closeAboutModal) {
+                aboutBtn.addEventListener('click', function() {
+                    aboutModal.classList.add('active');
+                });
+
+                closeAboutModal.addEventListener('click', function() {
+                    aboutModal.classList.remove('active');
+                });
+            }
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (helpModal && e.target === helpModal) helpModal.classList.remove('active');
+                if (aboutModal && e.target === aboutModal) aboutModal.classList.remove('active');
+                if (layerSwitchModal && e.target === layerSwitchModal) layerSwitchModal.classList.remove('active');
+            });
+
+            console.log('All button events bound successfully');
+        };
+        </script>
+    </body>
+</html>
